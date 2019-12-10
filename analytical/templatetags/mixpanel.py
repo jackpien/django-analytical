@@ -15,10 +15,18 @@ from analytical.utils import is_internal_ip, disable_html, get_identity, \
 
 
 MIXPANEL_API_TOKEN_RE = re.compile(r'^[0-9a-f]{32}$')
-TRACKING_CODE = """
+TRACKING_CODE_OLD = """
     <script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
 typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);b._i.push([a,
 e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+    mixpanel.init('%(token)s');
+    %(commands)s
+    </script>
+"""  # noqa
+TRACKING_CODE = """
+    <script type="text/javascript">(function(e,a){if(!a.__SV){var b=window;try{var c,l,i,j=b.location,g=j.hash;c=function(a,b){return(l=a.match(RegExp(b+"=([^&]*)")))?l[1]:null};g&&c(g,"state")&&(i=JSON.parse(decodeURIComponent(c(g,"state"))),"mpeditor"===i.action&&(b.sessionStorage.setItem("_mpcehash",g),history.replaceState(i.desiredHash||"",e.title,j.pathname+j.search)))}catch(m){}var k,h;window.mixpanel=a;a._i=[];a.init=function(b,c,f){function e(b,a){var c=a.split(".");2==c.length&&(b=b[c[0]],a=c[1]);b[a]=function(){b.push([a].concat(Array.prototype.slice.call(arguments,
+    0)))}}var d=a;"undefined"!==typeof f?d=a[f]=[]:f="mixpanel";d.people=d.people||[];d.toString=function(b){var a="mixpanel";"mixpanel"!==f&&(a+="."+f);b||(a+=" (stub)");return a};d.people.toString=function(){return d.toString(1)+".people (stub)"};k="disable time_event track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user".split(" ");
+    for(h=0;h<k.length;h++)e(d,k[h]);a._i.push([b,c,f])};a.__SV=1.2;b=e.createElement("script");b.type="text/javascript";b.async=!0;b.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?MIXPANEL_CUSTOM_LIB_URL:"file:"===e.location.protocol&&"//cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js";c=e.getElementsByTagName("script")[0];c.parentNode.insertBefore(b,c)}})(document,window.mixpanel||[]);
     mixpanel.init('%(token)s');
     %(commands)s
     </script>
@@ -27,6 +35,10 @@ IDENTIFY_CODE = "mixpanel.identify('%s');"
 IDENTIFY_PROPERTIES = "mixpanel.people.set(%s);"
 EVENT_CODE = "mixpanel.track('%(name)s', %(properties)s);"
 EVENT_CONTEXT_KEY = 'mixpanel_event'
+
+# New AF386 Group addition
+ALIAS_KEY = 'mixpanel_alias'
+ALIAS_CODE = "mixpanel.alias('%s');"
 
 register = Library()
 
@@ -54,12 +66,20 @@ class MixpanelNode(Node):
     def render(self, context):
         commands = []
         identity = get_identity(context, 'mixpanel')
+        inject_alias = context.get(ALIAS_KEY, False)
+
+        id_alias_code = ALIAS_CODE if inject_alias else IDENTIFY_CODE
+
         if identity is not None:
             if isinstance(identity, dict):
-                commands.append(IDENTIFY_CODE % identity.get('id', identity.get('username')))
-                commands.append(IDENTIFY_PROPERTIES % json.dumps(identity, sort_keys=True))
+                commands.append(
+                    id_alias_code % identity.get('id',
+                                                 identity.get('username')))
+                if inject_alias is False:
+                    commands.append(IDENTIFY_PROPERTIES % json.dumps(
+                        identity, sort_keys=True))
             else:
-                commands.append(IDENTIFY_CODE % identity)
+                commands.append(id_alias_code % identity)
         try:
             name, properties = context[EVENT_CONTEXT_KEY]
             commands.append(EVENT_CODE % {
