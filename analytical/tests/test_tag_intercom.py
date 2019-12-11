@@ -22,7 +22,8 @@ class IntercomTagTestCase(TagTestCase):
 
     def test_tag(self):
         rendered_tag = self.render_tag('intercom', 'intercom')
-        self.assertTrue(rendered_tag.strip().startswith('<script id="IntercomSettingsScriptTag">'))
+        self.assertTrue(rendered_tag.strip().startswith(
+            '<script id="IntercomSettingsScriptTag">'))
 
     def test_node(self):
         now = datetime.datetime(2014, 4, 9, 15, 15, 0)
@@ -37,10 +38,10 @@ class IntercomTagTestCase(TagTestCase):
         # Because the json isn't predictably ordered, we can't just test the whole thing verbatim.
         self.assertEqual("""
 <script id="IntercomSettingsScriptTag">
-  window.intercomSettings = {"app_id": "abc123xyz", "created_at": 1397074500, "email": "test@example.com", "name": "Firstname Lastname", "user_id": %(user_id)s};
+  window.intercomSettings = {"app_id": "abc123xyz", "created_at": %(ts)s, "email": "test@example.com", "name": "Firstname Lastname", "user_id": %(user_id)s};
 </script>
 <script>(function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic('reattach_activator');ic('update',intercomSettings);}else{var d=document;var i=function(){i.c(arguments)};i.q=[];i.c=function(args){i.q.push(args)};w.Intercom=i;function l(){var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://static.intercomcdn.com/intercom.v1.js';var x=d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);}if(w.attachEvent){w.attachEvent('onload',l);}else{w.addEventListener('load',l,false);}}})()</script>
-""" % {'user_id': user.pk}, rendered_tag)  # noqa
+""" % {'user_id': user.pk, 'ts': int(now.timestamp())}, rendered_tag)  # noqa
 
     @override_settings(INTERCOM_APP_ID=None)
     def test_no_account_number(self):
@@ -63,27 +64,29 @@ class IntercomTagTestCase(TagTestCase):
             'user': user,
         }))
         self.assertTrue('window.intercomSettings = {'
-                        '"app_id": "abc123xyz", "created_at": 1397074500, '
+                        # 1397074500, '
+                        '"app_id": "abc123xyz", "created_at": %(ts)s, '
                         '"email": "test@example.com", "name": "Firstname Lastname", '
                         '"user_id": %(user_id)s'
-                        '};' % {'user_id': user.pk} in r, msg=r)
+                        '};' % {'user_id': user.pk, 'ts': int(now.timestamp())} in r, msg=r)
 
     def test_custom(self):
         r = IntercomNode().render(Context({
-                'intercom_var1': 'val1',
-                'intercom_var2': 'val2'
+            'intercom_var1': 'val1',
+            'intercom_var2': 'val2'
         }))
         self.assertTrue('var1": "val1", "var2": "val2"' in r)
 
     def test_identify_name_and_email(self):
         r = IntercomNode().render(Context({
-                'user': User(
-                    username='test',
-                    first_name='Firstname',
-                    last_name='Lastname',
-                    email="test@example.com"),
+            'user': User(
+                username='test',
+                first_name='Firstname',
+                last_name='Lastname',
+                email="test@example.com"),
         }))
-        self.assertTrue('"email": "test@example.com", "name": "Firstname Lastname"' in r)
+        self.assertTrue(
+            '"email": "test@example.com", "name": "Firstname Lastname"' in r)
 
     def test_identify_username_no_email(self):
         r = IntercomNode().render(Context({'user': User(username='test')}))
@@ -168,5 +171,6 @@ class IntercomTagTestCase(TagTestCase):
         req.META['REMOTE_ADDR'] = '1.1.1.1'
         context = Context({'request': req})
         r = IntercomNode().render(context)
-        self.assertTrue(r.startswith('<!-- Intercom disabled on internal IP address'), r)
+        self.assertTrue(r.startswith(
+            '<!-- Intercom disabled on internal IP address'), r)
         self.assertTrue(r.endswith('-->'), r)
