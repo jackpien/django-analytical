@@ -81,6 +81,7 @@ ga('require', 'displayfeatures');
 ga('send', 'pageview');""" in r, r)
 
     @override_settings(ANALYTICAL_INTERNAL_IPS=['1.1.1.1'])
+    @override_settings(GOOGLE_ANALYTICS_INTERNAL_IPS=None)
     def test_render_internal_ip(self):
         req = HttpRequest()
         req.META['REMOTE_ADDR'] = '1.1.1.1'
@@ -103,22 +104,26 @@ ga('send', 'pageview');""" in r, r)
     @override_settings(GOOGLE_ANALYTICS_SAMPLE_RATE=0.0)
     def test_set_sample_rate_min(self):
         r = GoogleAnalyticsJsNode().render(Context())
-        self.assertTrue("""ga('create', 'UA-123456-7', 'auto', {"sampleRate": 0});""" in r, r)
+        self.assertTrue(
+            """ga('create', 'UA-123456-7', 'auto', {"sampleRate": 0});""" in r, r)
 
     @override_settings(GOOGLE_ANALYTICS_SAMPLE_RATE='100.00')
     def test_set_sample_rate_max(self):
         r = GoogleAnalyticsJsNode().render(Context())
-        self.assertTrue("""ga('create', 'UA-123456-7', 'auto', {"sampleRate": 100});""" in r, r)
+        self.assertTrue(
+            """ga('create', 'UA-123456-7', 'auto', {"sampleRate": 100});""" in r, r)
 
     @override_settings(GOOGLE_ANALYTICS_SAMPLE_RATE=-1)
     def test_exception_whenset_sample_rate_too_small(self):
         context = Context()
-        self.assertRaises(AnalyticalException, GoogleAnalyticsJsNode().render, context)
+        self.assertRaises(AnalyticalException,
+                          GoogleAnalyticsJsNode().render, context)
 
     @override_settings(GOOGLE_ANALYTICS_SAMPLE_RATE=101)
     def test_exception_when_set_sample_rate_too_large(self):
         context = Context()
-        self.assertRaises(AnalyticalException, GoogleAnalyticsJsNode().render, context)
+        self.assertRaises(AnalyticalException,
+                          GoogleAnalyticsJsNode().render, context)
 
     @override_settings(GOOGLE_ANALYTICS_SITE_SPEED_SAMPLE_RATE=0.0)
     def test_set_site_speed_sample_rate_min(self):
@@ -135,17 +140,20 @@ ga('send', 'pageview');""" in r, r)
     @override_settings(GOOGLE_ANALYTICS_SITE_SPEED_SAMPLE_RATE=-1)
     def test_exception_whenset_site_speed_sample_rate_too_small(self):
         context = Context()
-        self.assertRaises(AnalyticalException, GoogleAnalyticsJsNode().render, context)
+        self.assertRaises(AnalyticalException,
+                          GoogleAnalyticsJsNode().render, context)
 
     @override_settings(GOOGLE_ANALYTICS_SITE_SPEED_SAMPLE_RATE=101)
     def test_exception_when_set_site_speed_sample_rate_too_large(self):
         context = Context()
-        self.assertRaises(AnalyticalException, GoogleAnalyticsJsNode().render, context)
+        self.assertRaises(AnalyticalException,
+                          GoogleAnalyticsJsNode().render, context)
 
     @override_settings(GOOGLE_ANALYTICS_COOKIE_EXPIRATION=0)
     def test_set_cookie_expiration_min(self):
         r = GoogleAnalyticsJsNode().render(Context())
-        self.assertTrue("""ga('create', 'UA-123456-7', 'auto', {"cookieExpires": 0});""" in r, r)
+        self.assertTrue(
+            """ga('create', 'UA-123456-7', 'auto', {"cookieExpires": 0});""" in r, r)
 
     @override_settings(GOOGLE_ANALYTICS_COOKIE_EXPIRATION='10000')
     def test_set_cookie_expiration_as_string(self):
@@ -156,7 +164,8 @@ ga('send', 'pageview');""" in r, r)
     @override_settings(GOOGLE_ANALYTICS_COOKIE_EXPIRATION=-1)
     def test_exception_when_set_cookie_expiration_too_small(self):
         context = Context()
-        self.assertRaises(AnalyticalException, GoogleAnalyticsJsNode().render, context)
+        self.assertRaises(AnalyticalException,
+                          GoogleAnalyticsJsNode().render, context)
 
 
 @override_settings(GOOGLE_ANALYTICS_JS_PROPERTY_ID='UA-123456-7',
@@ -166,4 +175,5 @@ ga('send', 'pageview');""" in r, r)
 class NoDomainTestCase(TestCase):
     def test_exception_without_domain(self):
         context = Context()
-        self.assertRaises(AnalyticalException, GoogleAnalyticsJsNode().render, context)
+        self.assertRaises(AnalyticalException,
+                          GoogleAnalyticsJsNode().render, context)

@@ -106,6 +106,7 @@ class FacebookPixelTagTestCase(TagTestCase):
         self.assertEqual(_disabled(expected_body_html), body_html)
 
     @override_settings(MIXPANEL_API_TOKEN='')
+    @override_settings(GOOGLE_ANALYTICS_PROPERTY_ID='')
     def test_contribute_to_analytical(self):
         """
         `facebook_pixel.contribute_to_analytical` registers the head and body nodes.

@@ -74,6 +74,7 @@ class HotjarTagTestCase(TagTestCase):
         self.assertEqual(disabled_html, actual_html)
 
     @override_settings(MIXPANEL_API_TOKEN='')
+    @override_settings(GOOGLE_ANALYTICS_PROPERTY_ID='')
     def test_contribute_to_analytical(self):
         """
         `hotjar.contribute_to_analytical` registers the head and body nodes.
