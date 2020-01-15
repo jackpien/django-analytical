@@ -49,13 +49,15 @@ class HotjarTagTestCase(TagTestCase):
     @override_settings(HOTJAR_SITE_ID=None)
     def test_no_id(self):
         expected_pattern = r'^HOTJAR_SITE_ID setting is not set$'
-        self.assertRaisesRegexp(AnalyticalException, expected_pattern, HotjarNode)
+        self.assertRaisesRegexp(AnalyticalException,
+                                expected_pattern, HotjarNode)
 
     @override_settings(HOTJAR_SITE_ID='invalid')
     def test_invalid_id(self):
         expected_pattern = (
             r"^HOTJAR_SITE_ID setting: must be \(a string containing\) a number: 'invalid'$")
-        self.assertRaisesRegexp(AnalyticalException, expected_pattern, HotjarNode)
+        self.assertRaisesRegexp(AnalyticalException,
+                                expected_pattern, HotjarNode)
 
     @override_settings(ANALYTICAL_INTERNAL_IPS=['1.1.1.1'])
     def test_render_internal_ip(self):
@@ -65,12 +67,13 @@ class HotjarTagTestCase(TagTestCase):
 
         actual_html = HotjarNode().render(context)
         disabled_html = '\n'.join([
-                '<!-- Hotjar disabled on internal IP address',
-                expected_html,
-                '-->',
-            ])
+            '<!-- Hotjar disabled on internal IP address',
+            expected_html,
+            '-->',
+        ])
         self.assertEqual(disabled_html, actual_html)
 
+    @override_settings(MIXPANEL_API_TOKEN='')
     def test_contribute_to_analytical(self):
         """
         `hotjar.contribute_to_analytical` registers the head and body nodes.

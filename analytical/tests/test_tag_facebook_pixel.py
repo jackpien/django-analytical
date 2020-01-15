@@ -72,15 +72,19 @@ class FacebookPixelTagTestCase(TagTestCase):
     @override_settings(FACEBOOK_PIXEL_ID=None)
     def test_no_id(self):
         expected_pattern = r'^FACEBOOK_PIXEL_ID setting is not set$'
-        self.assertRaisesRegexp(AnalyticalException, expected_pattern, FacebookPixelHeadNode)
-        self.assertRaisesRegexp(AnalyticalException, expected_pattern, FacebookPixelBodyNode)
+        self.assertRaisesRegexp(AnalyticalException,
+                                expected_pattern, FacebookPixelHeadNode)
+        self.assertRaisesRegexp(AnalyticalException,
+                                expected_pattern, FacebookPixelBodyNode)
 
     @override_settings(FACEBOOK_PIXEL_ID='invalid')
     def test_invalid_id(self):
         expected_pattern = (
             r"^FACEBOOK_PIXEL_ID setting: must be \(a string containing\) a number: 'invalid'$")
-        self.assertRaisesRegexp(AnalyticalException, expected_pattern, FacebookPixelHeadNode)
-        self.assertRaisesRegexp(AnalyticalException, expected_pattern, FacebookPixelBodyNode)
+        self.assertRaisesRegexp(AnalyticalException,
+                                expected_pattern, FacebookPixelHeadNode)
+        self.assertRaisesRegexp(AnalyticalException,
+                                expected_pattern, FacebookPixelBodyNode)
 
     @override_settings(ANALYTICAL_INTERNAL_IPS=['1.1.1.1'])
     def test_render_internal_ip(self):
@@ -101,6 +105,7 @@ class FacebookPixelTagTestCase(TagTestCase):
         body_html = FacebookPixelBodyNode().render(context)
         self.assertEqual(_disabled(expected_body_html), body_html)
 
+    @override_settings(MIXPANEL_API_TOKEN='')
     def test_contribute_to_analytical(self):
         """
         `facebook_pixel.contribute_to_analytical` registers the head and body nodes.
